@@ -25,3 +25,6 @@ DerivedData/
 .codex/
 .agents/
 .aws/
+
+# Local-only: renderer for the README animation (docs/demo.webp)
+Tools/

@@ -75,7 +75,6 @@ Sources/DeskBro/     the app (SwiftUI + AppKit + EventKit)
 Resources/           Info.plist, entitlements, AppIcon.iconset
 build.sh             compiles with SwiftPM and assembles + signs build/DeskBro.app
 install.sh           build.sh, then installs to /Applications and launches
-Tools/readme-demo/   renders the animation and screenshot in this README
 ```
 
 ```sh
@@ -93,8 +92,6 @@ SIGN_IDENTITY="Apple Development" ./install.sh
 ```
 
 The generic bundle identifier is `org.example.DeskBro` (in `Resources/Info.plist`). Existing installations using another identifier keep separate preferences and permissions.
-
-**README media.** `Tools/readme-demo/render.sh` re-renders `docs/demo.webp` and `docs/dashboard.png` from the real dashboard view with example data (requires `ffmpeg`).
 
 **Publishing source.** Publish source files only. Build products, signing credentials, environment files and Xcode user settings are excluded by `.gitignore`. Do not force-add them or upload the entire working folder as an archive. Review staged changes before each commit, and use a GitHub private/noreply commit email to keep your email address out of public history.
 
