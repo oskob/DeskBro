@@ -1,0 +1,27 @@
+build/
+.build/
+.DS_Store
+
+# Local settings, credentials, signing material and generated artifacts
+**/xcuserdata/
+*.xcuserstate
+DerivedData/
+*.app/
+*.dSYM/
+*.xcarchive/
+*.ipa
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
+!.env.example
+*.local.xcconfig
+*.log
+.codex/
+.agents/
+.aws/
