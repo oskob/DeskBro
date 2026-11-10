@@ -2,8 +2,10 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Borderless windows can't become key by default, which we need for keyboard (Esc) and clicks.
-final class OverlayWindow: NSWindow {
+/// A non-activating panel: it can take keyboard focus (Esc, typing) even when macOS declines to
+/// bring DeskBro to the front, which often happens for a background app right after unlock.
+/// Borderless windows can't become key by default, hence the overrides.
+final class OverlayWindow: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 }
@@ -64,6 +66,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func handleUnlockOrWake() {
         guard settings.showOnUnlock, settings.hasCompletedOnboarding else { return }
+        // Already up (e.g. shown on wake behind the lock screen): just take focus again.
+        if let window, !isDismissing {
+            focusDashboard(window)
+            return
+        }
         showDashboard()
     }
 
@@ -94,11 +101,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let screen = NSScreen.main ?? NSScreen.screens[0]
         let window = OverlayWindow(
             contentRect: screen.frame,
-            styleMask: [.borderless],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         window.isReleasedWhenClosed = false
+        window.hidesOnDeactivate = false
+        window.becomesKeyOnlyIfNeeded = false
         window.setFrame(screen.frame, display: true)
         window.level = .statusBar
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
@@ -111,8 +120,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         NSApp.presentationOptions = [.hideDock, .hideMenuBar]
-        NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        focusDashboard(window)
 
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.4
@@ -133,6 +142,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         self.window = window
+    }
+
+    /// Makes the dashboard the key window and asks macOS to activate DeskBro. Activation can be
+    /// refused for background apps; the non-activating panel still receives keys either way.
+    private func focusDashboard(_ window: NSWindow) {
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        // Activation is asynchronous and may be refused at first; try again a moment later.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self, weak window] in
+            guard let window, self?.window === window, !window.isKeyWindow else { return }
+            NSApp.activate()
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 
     func dismiss() {
