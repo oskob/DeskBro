@@ -114,8 +114,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.setFrame(screen.frame, display: true)
         window.level = .statusBar
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        window.isOpaque = true
-        window.backgroundColor = .black
+        // Transparent: the dashboard paints its own background, so a fade never shows a black backdrop.
+        window.isOpaque = false
+        window.backgroundColor = .clear
         window.hasShadow = false
         window.alphaValue = 0
         window.contentView = NSHostingView(
