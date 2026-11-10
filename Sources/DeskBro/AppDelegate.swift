@@ -23,6 +23,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let model = DashboardModel()
     private let settings = AppSettings.shared
     private var hotKey: GlobalHotKey?
+    /// Esc as a system-wide hotkey while the dashboard is up, so it works even when macOS
+    /// routes the keyboard to another app after unlock.
+    private var escHotKey: GlobalHotKey?
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -128,6 +131,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.animator().alphaValue = 1
         }
 
+        if escHotKey == nil {
+            escHotKey = GlobalHotKey { [weak self] in
+                Task { @MainActor in self?.dismiss() }
+            }
+        }
+        escHotKey?.register(KeyCombo(keyCode: 53, modifiers: 0)) // Esc
+
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 { // Esc
                 self?.dismiss()
@@ -163,14 +173,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.25
             window.animator().alphaValue = 0
-        }, completionHandler: { [weak self] in
-            MainActor.assumeIsolated { self?.tearDown() }
+        }, completionHandler: { [weak self, weak window] in
+            MainActor.assumeIsolated {
+                guard let self, let window, self.window === window else { return }
+                self.tearDown()
+            }
         })
+        // Animations may never complete (e.g. while the display sleeps); don't get stuck half-dismissed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self, weak window] in
+            guard let self, let window, self.window === window else { return }
+            self.tearDown()
+        }
     }
 
     private func tearDown() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+        escHotKey?.unregister()
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
         window?.orderOut(nil)

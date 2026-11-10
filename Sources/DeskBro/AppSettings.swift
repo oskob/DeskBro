@@ -153,22 +153,36 @@ final class GlobalHotKey {
     private var handlerRef: EventHandlerRef?
     private let action: () -> Void
 
+    private static var nextID: UInt32 = 1
+    private let id: UInt32
+
     init(action: @escaping () -> Void) {
         self.action = action
+        self.id = Self.nextID
+        Self.nextID += 1
         var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        InstallEventHandler(GetApplicationEventTarget(), { _, _, userData in
-            guard let userData else { return noErr }
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, userData in
+            guard let event, let userData else { return OSStatus(eventNotHandledErr) }
             let me = Unmanaged<GlobalHotKey>.fromOpaque(userData).takeUnretainedValue()
+            var pressed = EventHotKeyID()
+            GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                              nil, MemoryLayout<EventHotKeyID>.size, nil, &pressed)
+            // Every instance's handler sees every hotkey; only react to our own.
+            guard pressed.signature == GlobalHotKey.signature, pressed.id == me.id else {
+                return OSStatus(eventNotHandledErr)
+            }
             DispatchQueue.main.async { me.action() }
             return noErr
         }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handlerRef)
     }
 
+    private static let signature = OSType(0x4453_4B42) // "DSKB"
+
     func register(_ combo: KeyCombo?) {
         unregister()
         guard let combo else { return }
-        let id = EventHotKeyID(signature: OSType(0x4453_4B42), id: 1) // "DSKB"
-        RegisterEventHotKey(UInt32(combo.keyCode), combo.carbonModifiers, id,
+        RegisterEventHotKey(UInt32(combo.keyCode), combo.carbonModifiers,
+                            EventHotKeyID(signature: Self.signature, id: id),
                             GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 
