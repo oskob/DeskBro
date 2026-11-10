@@ -66,9 +66,13 @@ struct KeyCombo: Codable, Equatable {
         return String(utf16CodeUnits: chars, count: length).uppercased()
     }
 
-    /// ⌥⌘D
+    /// ⌃⌥⌘D — not used by macOS (⌥⌘D toggles Dock hiding).
     static let defaultCombo = KeyCombo(keyCode: UInt16(kVK_ANSI_D),
-                                       modifiers: NSEvent.ModifierFlags([.option, .command]).rawValue)
+                                       modifiers: NSEvent.ModifierFlags([.control, .option, .command]).rawValue)
+
+    /// The old default, which clashed with the system's Dock shortcut.
+    static let legacyDefaultCombo = KeyCombo(keyCode: UInt16(kVK_ANSI_D),
+                                             modifiers: NSEvent.ModifierFlags([.option, .command]).rawValue)
 }
 
 @MainActor
@@ -113,7 +117,14 @@ final class AppSettings: ObservableObject {
         showOnUnlock = defaults.bool(forKey: Keys.showOnUnlock)
 
         if let data = defaults.data(forKey: Keys.hotKey) {
-            hotKey = data.isEmpty ? nil : try? JSONDecoder().decode(KeyCombo.self, from: data)
+            let saved = data.isEmpty ? nil : try? JSONDecoder().decode(KeyCombo.self, from: data)
+            if saved?.keyCode == KeyCombo.legacyDefaultCombo.keyCode,
+               saved?.modifiers == KeyCombo.legacyDefaultCombo.modifiers {
+                hotKey = KeyCombo.defaultCombo
+                defaults.removeObject(forKey: Keys.hotKey)
+            } else {
+                hotKey = saved
+            }
         } else {
             hotKey = KeyCombo.defaultCombo
         }

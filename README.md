@@ -19,7 +19,7 @@ Notifications are easy to ignore. DeskBro isn’t: when you unlock your Mac it f
 - **This week at a glance** — a compact strip of the whole week under the agenda.
 - **Reminders** — all your open reminders, with due dates (overdue in red), lists and priorities. Tick them off, add new ones inline, and drag to reorder.
 - **Shows up on unlock** — covers the screen when you unlock or wake your Mac. Dismiss with the button or <kbd>esc</kbd>.
-- **Global shortcut** — open or close the dashboard from anywhere (<kbd>⌥</kbd><kbd>⌘</kbd><kbd>D</kbd> by default, configurable).
+- **Global shortcut** — open or close the dashboard from anywhere (<kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>D</kbd> by default, configurable).
 - **Lives in the menu bar** — no Dock icon. Optional launch at login.
 - **Native and private** — SwiftUI + EventKit, sandboxed, no network access, no analytics. Works with any account you’ve added to Calendar and Reminders (iCloud, Google, Exchange…).
 
@@ -51,7 +51,7 @@ That’s it — DeskBro is in your menu bar. Because it’s built on your own Ma
 
 | | |
 |---|---|
-| Show / hide the dashboard | <kbd>⌥</kbd><kbd>⌘</kbd><kbd>D</kbd>, or menu bar icon → **Show Dashboard** |
+| Show / hide the dashboard | <kbd>⌃</kbd><kbd>⌥</kbd><kbd>⌘</kbd><kbd>D</kbd>, or menu bar icon → **Show Dashboard** |
 | Dismiss | <kbd>esc</kbd> or **Dismiss** |
 | Complete a reminder | Click its circle |
 | Add a reminder | Click **Add reminder** under the list, type, press <kbd>Return</kbd> |
